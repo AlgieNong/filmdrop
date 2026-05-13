@@ -1,0 +1,87 @@
+@startuml
+!theme plain
+
+skinparam component {
+  BackgroundColor #F8F9FA
+  BorderColor #333333
+  FontSize 14
+  FontName "Microsoft YaHei"
+}
+
+skinparam rectangle {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+skinparam database {
+  BackgroundColor #FFF3E0
+  BorderColor #E65100
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+skinparam cloud {
+  BackgroundColor #F3E5F5
+  BorderColor #7B1FA2
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+title FilmDrop 系统架构图
+
+rectangle "用户\n(User)" as user #E8F5E9
+
+rectangle "前端 - Next.js" #64B5F6 as frontend {
+  component "SSR 页面" as ssr
+  component "客户端交互" as spa
+  component "API Client" as api_client
+}
+
+rectangle "后端 - Spring Boot" #81C784 as backend {
+  component "REST Controller" as rest
+  component "业务逻辑层\n(Service)" as service
+  component "数据访问层\n(Repository)" as repo
+  component "定时任务\n(XXL-Job Executor)" as scheduler
+  component "爬虫模块" as crawler
+}
+
+database "MySQL\nfilmDB" as db
+
+rectangle "外部服务" as external {
+  cloud "TMDB API" as tmdb
+  cloud "豆瓣\n(爬取)" as douban
+}
+
+rectangle "XXL-Job\n调度中心" as xxl_admin
+
+rectangle "邮件服务\n(SMTP)" as mail
+
+' === 连接线 ===
+user --> frontend : HTTPS 访问
+
+frontend --> backend : REST API (JSON)\n8080端口
+backend --> db : JDBC\n3306端口
+
+backend --> tmdb : RestClient\n获取电影元数据
+backend --> douban : Jsoup\n爬取评分/评论
+
+backend --> xxl_admin : 注册任务\n汇报执行结果
+xxl_admin --> scheduler : 触发定时任务
+
+backend --> mail : Spring Mail\n发送推荐邮件
+
+note right of backend
+  架构模式: Maven 多模块单体
+  Java 17 + Spring Boot 3.4.x
+  MyBatis-Plus + MySQL
+end note
+
+note right of frontend
+  Next.js (React) SSR
+  App Router + Tailwind CSS
+  Node.js 20 LTS
+end note
+
+@enduml

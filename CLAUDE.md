@@ -9,13 +9,66 @@ FilmDrop（中文名：映投）的核心概念很简单：**定期投递一部�
 
 ## 项目状态
 
-项目当前处于**产品定义阶段**，尚未开始编码。
+项目当前处于**技术选型完成，待数据模型设计**阶段。
 具体进度见 [.claude/memory/CURRENT_STATE.md](.claude/memory/CURRENT_STATE.md)。
+
+## 架构概览
+
+### 整体架构（前后端分离）
+
+```
+用户浏览器 ──HTTPS──> Next.js (SSR) ──REST API──> Spring Boot ──JDBC──> MySQL
+                                                       │
+                                              ┌────────┼────────┐
+                                              │        │        │
+                                          TMDB API  豆瓣爬虫  XXL-Job
+                                           (数据源)  (评分)   (定时调度)
+```
+
+### 后端架构（Maven 多模块单体）
+
+| 模块 | 职责 |
+|---|---|
+| `filmdrop-web` | 启动入口、REST 控制器、Security 配置 |
+| `filmdrop-user` | 用户注册/登录、偏好管理、JWT |
+| `filmdrop-movie` | 电影 CRUD、TMDB 数据同步、搜索筛选 |
+| `filmdrop-recommendation` | 推荐算法、推荐记录 |
+| `filmdrop-crawler` | 豆瓣评分/评论爬取 |
+| `filmdrop-push` | 邮件推送、XXL-Job 定时任务 |
+| `filmdrop-common` | 共享工具、常量、异常 |
+
+模块间单向依赖：`web → 业务模块 → common`
+
+### 前端架构（Next.js App Router）
+
+```
+src/app/
+├── page.tsx              # 首页推荐流（公开）
+├── login/                # 登录（公开）
+├── register/             # 注册（公开）
+├── movies/               # 搜索/筛选（公开）
+├── movie/[id]/           # 电影详情（公开）
+├── recommendations/      # 我的推荐（需登录）
+└── settings/             # 设置（需登录）
+```
+
+### 技术栈汇总
+
+| 维度 | 选型 |
+|---|---|
+| 后端框架 | Spring Boot 3.4.x / Java 17 / Maven |
+| 数据库 | MySQL 8.0+ / MyBatis-Plus |
+| 定时任务 | XXL-Job |
+| 前端框架 | Next.js (React) / App Router / Tailwind CSS |
+| 架构模式 | 前后端分离 / 单仓库（Monorepo） |
+| 数据源 | TMDB API（主）+ 豆瓣爬虫（评分补充） |
+
+> 详细架构图见 [docs/architecture/diagrams.md](docs/architecture/diagrams.md)
 
 ## 目录结构
 
 ```
-movie-api/
+filmdrop/
 ├── CLAUDE.md                 ← 本文件（每个 session 自动读取）
 ├── .gitignore
 ├── README.md
@@ -26,7 +79,22 @@ movie-api/
 │   │   ├── TECH_DECISIONS.md
 │   │   └── ROADMAP.md
 │   └── settings.local.json
-└── docs/                     ← 产品文档
+├── backend/                  ← Spring Boot 后端（Maven 多模块）
+│   ├── pom.xml
+│   ├── filmdrop-common/
+│   ├── filmdrop-user/
+│   ├── filmdrop-movie/
+│   ├── filmdrop-recommendation/
+│   ├── filmdrop-crawler/
+│   ├── filmdrop-push/
+│   └── filmdrop-web/
+├── frontend/                 ← Next.js 前端
+│   ├── package.json
+│   ├── next.config.ts
+│   └── src/app/
+└── docs/                     ← 产品 & 架构文档
+    └── architecture/
+        └── diagrams.md         ← PlantUML 架构图
 ```
 
 ## Session Protocol（跨 session 协作规范）

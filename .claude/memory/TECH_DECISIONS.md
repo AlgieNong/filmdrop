@@ -36,3 +36,43 @@
 - **理由：** MVP 阶段聚焦核心体验，减少非必要功能开发量。
 - **替代方案：** 做后台/移动端/反馈机制（超出 MVP 范围）
 - **影响范围：** 前后端功能清单据此确定，无管理后台意味着初期电影数据同步需手动或脚本处理
+
+## 2026-05-13 | 用户访问策略：非登录可浏览
+
+- **决策内容：** 非登录用户可浏览电影列表、详情页等内容；登录后获得个性化推荐和推送服务。
+- **理由：** 降低使用门槛，同时使网站内容对搜索引擎可见，有利于 SEO。
+- **替代方案：** 全站必须登录（内容对爬虫不可见，不利于传播）
+- **影响范围：** 前端需支持 SSR（SEO 友好），故选择 Next.js；后端 API 需区分"公开接口"和"登录接口"
+
+## 2026-05-13 | 后端技术栈：Spring Boot + Maven + MySQL + MyBatis-Plus
+
+- **决策内容：**
+  - 后端框架：Spring Boot
+  - 构建工具：Maven
+  - 数据库：MySQL
+  - ORM：MyBatis + MyBatis-Plus
+  - 定时任务：XXL-Job
+  - 数据源调用：Spring RestClient（TMDB API）+ Jsoup（豆瓣爬虫）
+- **理由：** Java 技术栈成熟稳定，用户熟悉度高；Spring Boot 生态完善、社区活跃；Maven 稳定可靠、资料丰富；MyBatis-Plus 开发效率高；XXL-Job 分布式调度成熟适合定时推送。
+- **替代方案：** Gradle（学习成本较高）；PostgreSQL（用户更熟悉 MySQL）；JPA/Hibernate（MyBatis 更灵活）；Quartz/Spring Scheduling（XXL-Job 有管理界面更便于运维）
+- **影响范围：** 所有后端开发工作基于此技术栈展开
+
+## 2026-05-13 | 前端技术栈：Next.js + React
+
+- **决策内容：** 前端使用 Next.js（React 框架），支持 SSR / SEO，前后端分离部署。
+- **理由：** Next.js 支持 SSR 满足 SEO 需求；React 生态最大、第三方库最多、人才池最广；前后端分离有利于职责清晰和后续扩展。
+- **替代方案：** Nuxt（Vue）Vue 生态稍小；Thymeleaf + Htmx（前后端合一，前端扩展性受限）
+- **影响范围：** 前端独立为一个 Next.js 项目，通过 REST API 与后端通信
+
+## 2026-05-13 | 详细版本与配置确认
+
+- **决策内容：**
+  - Java 17 + Spring Boot 3.4.x
+  - Node.js 20 LTS
+  - Next.js App Router（而非 Pages Router）
+  - Tailwind CSS（CSS 方案）
+  - MySQL 8.0+
+  - 不使用数据迁移工具，手动维护 SQL 脚本
+- **理由：** 全选当前主流稳定版本；App Router 是 Next.js 官方推荐；Tailwind 与 Next.js 集成最佳；手动 SQL 脚本适合 MVP 阶段，不增加额外工具学习成本。
+- **替代方案：** Pages Router（遗留方式）；CSS Modules（不如 Tailwind 高效）；Flyway/Liquibase（增加复杂度，MVP 阶段不必要）
+- **影响范围：** 所有配置文件中的版本号依此确定

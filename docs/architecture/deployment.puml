@@ -1,0 +1,87 @@
+@startuml
+!theme plain
+
+skinparam component {
+  FontSize 13
+  FontName "Microsoft YaHei"
+}
+
+skinparam rectangle {
+  BackgroundColor #E8EAF6
+  BorderColor #283593
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+skinparam database {
+  BackgroundColor #FFF3E0
+  BorderColor #E65100
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+skinparam cloud {
+  BackgroundColor #F3E5F5
+  BorderColor #7B1FA2
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+title 部署架构图
+
+rectangle "用户" as user {
+  component "浏览器" as browser
+}
+
+rectangle "Web 服务器" as web_server {
+  component "Next.js\n(Standalone)" as nextjs
+  note right
+    端口: 3000
+    SSR 渲染
+    静态资源托管
+  end note
+}
+
+rectangle "应用服务器" as app_server {
+  component "Spring Boot JAR\n(filmdrop-web)" as springboot
+  note right
+    端口: 8080
+    Java 17
+    JWT 鉴权
+  end note
+}
+
+rectangle "XXL-Job 服务器" as xxl_server {
+  component "XXL-Job Admin\n(独立部署)" as xxl_admin
+  component "XXL-Job Executor\n(内嵌于 Spring Boot)" as xxl_executor
+  note right
+    Admin 端口: 8081
+    Executor 端口: 9999
+  end note
+}
+
+database "数据库服务器" as db_server {
+  database "MySQL 8.0+\nfilmDB" as mysql
+  note right
+    端口: 3306
+    字符集: utf8mb4
+  end note
+}
+
+cloud "外部服务" as external {
+  cloud "TMDB API" as tmdb
+  cloud "SMTP 邮件服务" as smtp
+}
+
+' === 连接线 ===
+browser --> nextjs : HTTPS / 3000
+nextjs --> springboot : HTTP / 8080
+
+springboot --> mysql : JDBC / 3306
+springboot --> tmdb : HTTPS
+springboot --> smtp : SMTP
+
+xxl_admin --> springboot : 触发任务 / 9999
+springboot --> xxl_admin : 注册 + 回调
+
+@enduml

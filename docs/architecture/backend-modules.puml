@@ -1,0 +1,93 @@
+@startuml
+!theme plain
+
+skinparam component {
+  FontSize 13
+  FontName "Microsoft YaHei"
+}
+
+skinparam rectangle {
+  FontSize 12
+  FontName "Microsoft YaHei"
+}
+
+title 后端模块架构图 — Maven 多模块单体
+
+rectangle "filmdrop-web\n启动入口 + REST 控制器\n+ Security 配置" as web #FFCDD2
+
+rectangle "filmdrop-user\n用户模块" as user #C8E6C9
+rectangle "filmdrop-movie\n电影模块" as movie #C8E6C9
+rectangle "filmdrop-crawler\n爬虫模块" as crawler #C8E6C9
+
+rectangle "filmdrop-recommendation\n推荐模块" as recommendation #BBDEFB
+
+rectangle "filmdrop-push\n推送模块\n(XXL-Job Executor)" as push #FFE0B2
+
+rectangle "filmdrop-common\n共享工具、常量、异常" as common #F5F5F5
+
+' === 模块间依赖 ===
+web --> user
+web --> movie
+web --> recommendation
+web --> crawler
+web --> push
+
+recommendation --> movie
+recommendation --> user
+
+push --> user
+
+user --> common
+movie --> common
+recommendation --> common
+crawler --> common
+push --> common
+
+note top of web
+  Spring Boot 主启动类
+  Security 配置 (JWT 鉴权)
+  全局异常处理
+  公开 API / 登录 API 路由
+end note
+
+note right of user
+  - 用户注册/登录
+  - JWT Token 颁发
+  - 偏好管理
+  - 设置管理
+end note
+
+note right of movie
+  - 电影 CRUD
+  - TMDB 数据同步
+  - 搜索与筛选
+  - 分类/标签
+end note
+
+note right of crawler
+  - 豆瓣评分爬取
+  - 豆瓣评论爬取
+  - 数据合并逻辑
+end note
+
+note right of recommendation
+  - 推荐匹配算法
+  - 推荐记录管理
+  - 首页推荐流
+end note
+
+note right of push
+  - 邮件发送
+  - 新片上线推送
+  - 定时推送任务
+  - XXL-Job 任务定义
+end note
+
+note right of common
+  - 统一响应体 (Result<T>)
+  - 业务异常类
+  - 常量定义
+  - 工具类
+end note
+
+@enduml
